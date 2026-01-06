@@ -16,7 +16,7 @@ public class Hotspot {
 		this.mainClass = mainClassName;
 		this.classLoader = new BootstrapClassLoader(Arrays.asList(mainClassPath.split(File.pathSeparator)));
 	}
-	public void start() throws ClassNotFoundException {
+	public void start() throws Exception {
 		// 将主类编译成字节码文件，也就是demo.class 文件加载到内存中
 		ClassFile classFile =  classLoader.loadClass(mainClass);
 		// 创建 main 方法 的栈帧

@@ -13,7 +13,7 @@ public class StackFrame {
 	// 方法信息
 	final MethodInfo methodInfo;
 	// 局部变量表
-	final List<Object> localVariable;
+	final Object[] localVariable;
 	// 操作数栈
 	final Deque<Object> operandStack;
 	// 常量池
@@ -22,12 +22,13 @@ public class StackFrame {
 	final List<Instruction> instructions;
 	// 当前指令的索引
 	private int pcr = 0;
-	public StackFrame(MethodInfo methodInfo, ConstantPool constantPool) {
+	public StackFrame(MethodInfo methodInfo, ConstantPool constantPool, Object... args) {
 		this.methodInfo = methodInfo;
 		this.constantPool = constantPool;
-		this.localVariable = new ArrayList<>();
+		this.localVariable = new Object[methodInfo.getMaxLocals()];
 		this.operandStack = new ArrayDeque<>();
 		this.instructions = methodInfo.getCodes();
+		System.arraycopy(args,0,localVariable,0,args.length);
 	}
 	public Instruction getNextInstruction() {
 		return instructions.get(pcr++);
@@ -40,5 +41,15 @@ public class StackFrame {
 
 	public void pushObjectToOperandStack(Object o) {
 		operandStack.push(o);
+	}
+
+	public void jumpTo(int index) {
+		for (int i = 0; i < instructions.size(); i++) {
+			Instruction instruction = instructions.get(i);
+			if(instruction.getPc() == index) {
+				this.pcr = i;
+				return;
+			}
+		}
 	}
 }
