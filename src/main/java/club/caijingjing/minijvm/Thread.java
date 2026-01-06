@@ -24,6 +24,7 @@ public class Thread {
 		this.jvmStack.push(stackFrame);
 	}
 	public void start() throws Exception {
+		// 打断点，每个指令走一遍，并且在纸上绘制 jvmStack 和 StackFrame (operandStack 和 localVariable) 的变化，你就懂了！！！
 		while(!jvmStack.isEmpty()) {
 			ConstantPool constantPool = jvmStack.peek().constantPool();
 			Instruction currentInstruction = jvmStack.peek().getNextInstruction();
@@ -56,7 +57,7 @@ public class Thread {
 				case iconst_5 -> jvmStack.peek().pushObjectToOperandStack(5);
 				case iload_0 -> jvmStack.peek().pushObjectToOperandStack(jvmStack.peek().localVariable[0]);
 				case iload_1 -> jvmStack.peek().pushObjectToOperandStack(jvmStack.peek().localVariable[1]);
-				// todo：调用虚方法，虚方法是属于对象的方法，需要通过对象来调用，这里利用反射，注意参数的传递顺序，是从后往前取的，因为操作数栈是后进先出，数量上是参数数量 + 1（对象本身），所以参数数组长度是 params.size() + 1
+				// 调用虚方法，虚方法是属于对象的方法，需要通过对象来调用，这里利用反射，注意参数的传递顺序，是从后往前取的，因为操作数栈是后进先出，数量上是参数数量 + 1（对象本身），所以参数数组长度是 params.size() + 1
 				case invokevirtual -> {
 					InvokeVirtual invokeVirtual = (InvokeVirtual) currentInstruction;
 					ConstantMethodrefInfo methodInfo = invokeVirtual.getMethodInfo(constantPool);
@@ -73,7 +74,8 @@ public class Thread {
 						for(int i = params.size() - 1;i>=0;i--) {
 							args[i] = jvmStack.peek().operandStack.pop();
 						}
-						// 第一个参数是对象本身 存在操作数栈顶，为啥？？ 因为调用方法的时候，是先把对象引用压入操作数栈，然后才是参数，什么时候压进去的？？？
+						// operandStack 中的两个参数分别是：PrintStream 对象 和 2 （要打印的整数）
+						// printStream 是在 getStatic 指令中压入操作数栈的，System.out 是 static 字段
 						Object result = declaredMethod.invoke(jvmStack.peek().operandStack.pop(),args);
 						if(!methodInfo.isVoid(constantPool)) {
 							jvmStack.peek().pushObjectToOperandStack(result);
@@ -90,6 +92,7 @@ public class Thread {
 					StackFrame stackFrame = new StackFrame(finalMethodInfo, classFile.getConstantPool(), args);
 					jvmStack.push(stackFrame);
 				}
+				// max 方法属于 static ，进入此分支，此时 operandStack 的参数为：PrintStream 、1、3 , max 方法并没有进入 操作数栈，因为它属于static方法，所以没有塞"对象"进来。
 				case invokestatic -> {
 					InvokeStatic invokeStatic = (InvokeStatic) currentInstruction;
 					ConstantMethodrefInfo methodInfo = invokeStatic.getMethodInfo(constantPool);
